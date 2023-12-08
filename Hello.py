@@ -1,51 +1,61 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import streamlit as st
-from streamlit.logger import get_logger
+import pandas as pd
+import os
 
-LOGGER = get_logger(__name__)
+# @st.cache_data
+def load_words():
+  dirname=os.getcwd()
+  fname=dirname+"/data/wordlist"
+  words = [line.rstrip('\n') for line in open(fname, 'r')]
+  return words
+
+def dist(word1,word2):
+  if(len(word1)!=len(word2)):
+    return -1
+  diff=0
+  for i in range(len(word1)):
+    if(word1[i]!=word2[i]):
+      diff+=1
+  return diff
+
+# @st.cache_data
+def process_words():
+  neighbors={}
+  words=load_words()
+  for word1 in words:
+    for word2 in words:
+      if(dist(word1,word2)==1):
+        if word1 not in neighbors:
+          neighbors[word1]=word2
+        else:
+          neighbors[word1]=neighbors[word1]+","+word2
+  return neighbors
+  
 
 
-def run():
-    st.set_page_config(
-        page_title="Hello",
-        page_icon="👋",
-    )
 
-    st.write("# Welcome to Streamlit! 👋")
+if "words" not in st.session_state:
+  st.session_state.words=load_words()
+words=st.session_state.words
 
-    st.sidebar.success("Select a demo above.")
+if "neighbors" not in st.session_state: 
+  st.session_state.neighbors=process_words()
+neighbors=st.session_state.neighbors
 
-    st.markdown(
-        """
-        Streamlit is an open-source app framework built specifically for
-        Machine Learning and Data Science projects.
-        **👈 Select a demo from the sidebar** to see some examples
-        of what Streamlit can do!
-        ### Want to learn more?
-        - Check out [streamlit.io](https://streamlit.io)
-        - Jump into our [documentation](https://docs.streamlit.io)
-        - Ask a question in our [community
-          forums](https://discuss.streamlit.io)
-        ### See more complex demos
-        - Use a neural net to [analyze the Udacity Self-driving Car Image
-          Dataset](https://github.com/streamlit/demo-self-driving)
-        - Explore a [New York City rideshare dataset](https://github.com/streamlit/demo-uber-nyc-pickups)
-    """
-    )
+print(f"Neighbors length = {len(neighbors)}")
+with st.expander("Show neighbors"):
+  st.table(list(neighbors.items()))
 
+st.title("# Weaver")
+st.write("## A simple word game")
+if word := st.text_input("Enter a 4-letter word"):
+  st.write("You entered: ", word)
+  if(word not in words):
+    st.write("Not a word in our dictionary. Try again.")
+  elif word in neighbors:
+    st.write("Neighbors: ", neighbors[word])
+    st.write("Number of neighbors: ", len(neighbors[word]))
+    st.write("Number of words: ", len(words))
+  else:
+    st.write("No neighbors found. Try again.")
 
-if __name__ == "__main__":
-    run()
