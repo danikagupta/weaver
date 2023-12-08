@@ -46,16 +46,53 @@ print(f"Neighbors length = {len(neighbors)}")
 with st.expander("Show neighbors"):
   st.table(list(neighbors.items()))
 
+def solve(word1,word2,bannedlist):
+  distances={}
+  predecessors={}
+  st.write(f"word1={word1}, word2={word2}, bannedlist={bannedlist}")
+  for word in words:
+    distances[word]=-1
+  distances[word1]=0
+  for w in bannedlist:
+    distances[w]=-2
+  queue=[word1]
+  while(len(queue)>0):
+    word=queue.pop(0)
+    if word==word2:
+      break
+    if word in neighbors:
+      for neighbor in neighbors[word].split(","):
+        if distances[neighbor]==-1:
+          distances[neighbor]=distances[word]+1
+          predecessors[neighbor]=word
+          queue.append(neighbor)
+  if word2 in distances:
+    st.write(f"Distance between {word1} and {word2} is {distances[word2]}")
+    path=[]
+    word=word2
+    while(word!=word1):
+      path.append(word)
+      word=predecessors[word] 
+    path.append(word1)
+    path.reverse()
+    st.write(f"Path is {path}")
+
+
 st.title("# Weaver")
 st.write("## A simple word game")
-if word := st.text_input("Enter a 4-letter word"):
-  st.write("You entered: ", word)
-  if(word not in words):
-    st.write("Not a word in our dictionary. Try again.")
-  elif word in neighbors:
-    st.write("Neighbors: ", neighbors[word])
-    st.write("Number of neighbors: ", len(neighbors[word]))
-    st.write("Number of words: ", len(words))
+word1 = st.text_input("Enter the start word (4-letters)")
+word2 = st.text_input("Enter the end word (4-letters)")
+word3 = st.text_input("Enter the comma-separated banned words (4-letters)")
+if word1 and word2:
+  li=word3.split(",") if word3 else []
+  if word1 in words and word2 in words:
+    st.write(f"You entered: {word1} & {word2}")
+    solve(word1,word2,li)
   else:
-    st.write("No neighbors found. Try again.")
+    if word1 not in words:
+      st.write(f"Start word {word1} is not in the dictionary")
+    if word2 not in words:
+      st.write(f"End word {word2} is not in the dictionary")
+
+
 
